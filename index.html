@@ -4,162 +4,257 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>28 Days of Us</title>
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@300;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=Playfair+Display:ital,wght@1,600&display=swap" rel="stylesheet">
     <style>
-        :root { --pink: #ff85a1; --dark-pink: #ff4d6d; --bg: #fff5f5; }
-        body { background-color: var(--bg); font-family: 'Montserrat', sans-serif; margin: 0; min-height: 100vh; overflow-x: hidden; color: #4a4a4a; display: flex; align-items: center; justify-content: center; }
+        :root { --primary: #ff4d6d; --glass: rgba(255, 255, 255, 0.15); --border: rgba(255, 255, 255, 0.25); }
         
-        /* Game Screen */
-        #game-screen { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .heart-button { font-size: 60px; cursor: pointer; position: absolute; transition: all 0.3s ease; user-select: none; }
+        body { 
+            margin: 0; min-height: 100vh; overflow-x: hidden;
+            font-family: 'Outfit', sans-serif; color: #fff;
+            background: linear-gradient(135deg, #1e3c72, #2a5298, #ff6b6b);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            display: flex; flex-direction: column; align-items: center; padding-bottom: 40px;
+        }
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-        /* Main Content */
-        .container { width: 90%; max-width: 450px; display: none; padding: 20px; animation: fadeIn 1.5s; z-index: 10; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--border);
+            border-radius: 25px;
+            padding: 20px;
+            width: 85%; max-width: 400px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
 
-        /* Floating Polaroid */
-        .polaroid-wrap { perspective: 1000px; margin-bottom: 30px; }
-        .polaroid { background: white; padding: 15px 15px 60px 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-radius: 2px; animation: sway 4s ease-in-out infinite alternate; }
-        @keyframes sway { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
-        .polaroid img { width: 100%; height: 350px; object-fit: cover; border: 1px solid #f0f0f0; pointer-events: none; }
+        .polaroid img { width: 100%; height: 380px; object-fit: cover; border-radius: 15px; background: rgba(0,0,0,0.1); }
+        
+        #error-debug { color: #ffeb3b; background: rgba(0,0,0,0.6); padding: 10px; font-size: 0.75rem; margin-top: 10px; display: none; border-radius: 10px; border: 1px solid #ffeb3b; }
 
-        /* Scratch Card */
-        .scratch-container { position: relative; width: 100%; min-height: 100px; background: white; border-radius: 15px; overflow: hidden; margin-top: 20px; }
-        #scratch-canvas { position: absolute; top: 0; left: 0; cursor: crosshair; z-index: 2; touch-action: none; }
-        .inner-message { padding: 20px; font-style: italic; line-height: 1.6; z-index: 1; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 10px; }
+        .day-bubble { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: 0.3s; }
+        .day-bubble.unlocked { background: rgba(255,255,255,0.9); color: #1e3c72; }
+        .day-bubble.active { background: var(--primary); color: white; box-shadow: 0 0 15px var(--primary); transform: scale(1.15); border: none; z-index: 5; }
+        .day-bubble.locked { opacity: 0.2; cursor: not-allowed; }
 
-        /* Heart Explosion */
-        .particle { position: fixed; pointer-events: none; z-index: 999; animation: fly 1s ease-out forwards; }
-        @keyframes fly { to { transform: translate(var(--x), var(--y)) rotate(360deg); opacity: 0; } }
+        .scratch-box { position: relative; width: 100%; height: 100px; overflow: hidden; border-radius: 15px; margin-top: 15px; background: rgba(255,255,255,0.05); }
+        .hidden-text { position: absolute; inset: 0; display:flex; align-items:center; justify-content:center; padding: 15px; font-style: italic; font-size: 1rem; text-shadow: 0 1px 3px rgba(0,0,0,0.5); line-height: 1.4; }
+        canvas { position: absolute; top: 0; left: 0; z-index: 2; touch-action: none; }
 
-        .controls { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
-        .hug-btn { background: var(--dark-pink); color: white; border: none; padding: 12px 25px; border-radius: 25px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 15px rgba(255, 77, 109, 0.3); }
-        .distance { font-size: 0.75rem; color: #888; }
+        h1 { font-family: 'Playfair Display', serif; font-size: 2.2rem; margin: 15px 0; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        .hug-btn { background: white; color: var(--primary); border: none; padding: 12px 30px; border-radius: 50px; font-weight: 700; margin-top: 10px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: 0.3s; }
+        .hug-btn:active { transform: scale(0.95); }
+        
+        #game-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(10px); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.5s; }
+        .heart-floater { font-size: 90px; cursor: pointer; animation: pulse 1s infinite alternate; filter: drop-shadow(0 0 20px var(--primary)); }
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
+        
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
     <div id="game-screen">
-        <h2 style="padding: 20px; text-align: center;">Catch the 💝 to unlock Day <span id="day-num">1</span></h2>
-        <div id="target-heart" class="heart-button">💝</div>
+        <h2 style="font-family:'Playfair Display'; text-align:center; padding: 0 20px;">Every day is a gift with you...</h2>
+        <div id="target-heart" class="heart-floater">💝</div>
+        <p style="color:#666; margin-top:30px; letter-spacing: 1px; font-size: 0.8rem;">CATCH THE HEART TO ENTER</p>
     </div>
 
-    <div class="container" id="main-content">
-        <h1 id="title-text">February 1st</h1>
+    <div id="main-app" class="hidden">
+        <h1 id="date-title">February 1</h1>
         
-        <div class="polaroid-wrap">
+        <div class="glass-panel">
             <div class="polaroid">
-                <img id="today-img" src="" alt="Memory">
+                <img id="display-img" src="" alt="Loading..." onerror="imageFailed(this)">
             </div>
+            <div id="error-debug"></div>
+            
+            <div class="scratch-box">
+                <div class="hidden-text" id="display-msg"></div>
+                <canvas id="scratch-canvas"></canvas>
+            </div>
+            <button class="hug-btn" onclick="sendHug()">Send Hug 🤗</button>
         </div>
 
-        <p style="font-size: 0.9rem;">👇 Scratch to reveal my note</p>
-        <div class="scratch-container">
-            <div class="inner-message" id="today-msg">Loading message...</div>
-            <canvas id="scratch-canvas"></canvas>
+        <div class="glass-panel" style="width: 92%; max-width: 420px;">
+            <h3 style="margin: 0 0 15px 0; font-size: 0.9rem; opacity: 0.7; letter-spacing: 2px; font-weight: 300;">OUR FEBRUARY JOURNEY</h3>
+            <div class="calendar-grid" id="calendar-wrapper"></div>
+            <div id="days-left" style="margin-top: 20px; font-size: 0.8rem; opacity: 0.6; font-weight: 300;"></div>
         </div>
-
-        <div class="controls">
-            <button class="hug-btn" onclick="explodeHearts(event)">Send Me A Hug 🤗</button>
-            <div class="distance" id="dist-val">Calculating...</div>
-        </div>
+        
+        <div style="font-size: 0.75rem; opacity: 0.7; margin-top: 10px; font-weight: 300;" id="distance-tag"></div>
     </div>
 
-    <div id="player" style="display:none"></div>
+    <div id="valentine-view" class="hidden" style="position:fixed; inset:0; background:#ff4d6d; z-index:2000; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding: 20px;">
+        <h1 style="font-size: 3.5rem; line-height: 1;">Will you be<br>my Valentine?</h1>
+        <div style="font-size: 120px; margin: 40px; animation: pulse 1s infinite alternate;">💍</div>
+        <button onclick="window.location.href='https://wa.me/YOUR_PHONE_NUMBER?text=YES!+I+WILL!+❤️'" style="background:white; color:#ff4d6d; border:none; padding: 20px 60px; border-radius: 50px; font-size: 1.6rem; font-weight:900; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">YES! ❤️</button>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script>
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSKqWbkDWDomm_5dSZhriAHQAx3EG_jPrulurvlmkdlUl7XoF4pkz5KT-5JMHyauG_JbzQBDAYsdbuS/pub?gid=0&single=true&output=csv';
-        const YOUR_CITY = { lat: 28.6139, lon: 77.2090 }; // Update your Lat/Lon
-        const SG_CITY = { lat: 1.3521, lon: 103.8198 };
+        // --- MANDATORY SETUP ---
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSKqWbkDWDomm_5dSZhriAHQAx3EG_jPrulurvlmkdlUl7XoF4pkz5KT-5JMHyauG_JbzQBDAYsdbuS/pubhtml?gid=0&single=true'; // The .csv link from Publish to Web
+        const YOUR_LAT = 26.18; // Update to your Latitude
+        const YOUR_LON = 26.1921; // Update to your Longitude
+        const YOUR_PHONE = '917217680436'; // For the WhatsApp Yes button
+        // ------------------------
 
-        // --- DATA LOGIC ---
-        function loadContent() {
+        let allData = [];
+        let actualDayNum = 1; 
+
+        function imageFailed(img) {
+            const errBox = document.getElementById('error-debug');
+            errBox.style.display = 'block';
+            errBox.innerHTML = `⚠️ <b>Image Not Found</b><br>Tried: <i>${img.src}</i><br>Check if name matches GitHub exactly!`;
+        }
+
+        function init() {
+            // Get SG Date
             const options = { timeZone: 'Asia/Singapore', year: 'numeric', month: '2-digit', day: '2-digit' };
             const formatter = new Intl.DateTimeFormat('en-CA', options);
             const sgDate = formatter.format(new Date());
-            const dayNum = new Date().toLocaleString("en-US", {timeZone: "Asia/Singapore", day: "numeric"});
-            document.getElementById('day-num').innerText = dayNum;
+            actualDayNum = parseInt(sgDate.split('-')[2]); 
 
+            // Proposal Day Trigger
+            if (sgDate === '2026-02-14') {
+                document.getElementById('valentine-view').classList.remove('hidden');
+                document.getElementById('game-screen').classList.add('hidden');
+                return;
+            }
+
+            loadData(actualDayNum);
+        }
+
+        // Heart Catch Game
+        const target = document.getElementById('target-heart');
+        let clicks = 0;
+        function moveHeart() {
+            if (clicks < 3) {
+                target.style.transition = "0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+                target.style.transform = `translate(${Math.random()*160-80}px, ${Math.random()*160-80}px)`;
+                clicks++;
+            } else {
+                document.getElementById('game-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('game-screen').style.display = 'none';
+                    document.getElementById('main-app').classList.remove('hidden');
+                }, 500);
+            }
+        }
+        target.addEventListener('click', moveHeart);
+
+        function loadData(dayToLoad) {
             Papa.parse(SHEET_URL, {
                 download: true, header: true,
                 complete: function(results) {
-                    const today = results.data.find(r => r.Date && r.Date.trim() === sgDate);
-                    if (today) {
-                        document.getElementById('today-img').src = "images/" + today.ImageName.trim();
-                        document.getElementById('today-msg').innerText = today.Message;
-                        document.getElementById('title-text').innerText = "February " + dayNum;
-                        initScratch();
-                    }
+                    allData = results.data;
+                    renderContent(dayToLoad);
+                    renderCalendar(dayToLoad);
                 }
             });
         }
 
-        // --- HEART EXPLOSION ---
-        function explodeHearts(e) {
-            for(let i=0; i<15; i++) {
-                const p = document.createElement('div');
-                p.innerHTML = '❤️';
-                p.className = 'particle';
-                p.style.left = e.clientX + 'px';
-                p.style.top = e.clientY + 'px';
-                p.style.setProperty('--x', (Math.random()-0.5)*300 + 'px');
-                p.style.setProperty('--y', (Math.random()-0.5)*300 + 'px');
-                document.body.appendChild(p);
-                setTimeout(() => p.remove(), 1000);
+        function renderContent(day) {
+            // Corrected Row Finder for dates like 2026-02-01
+            const searchDate = `2026-02-${day.toString().padStart(2, '0')}`;
+            const row = allData.find(r => r.Date && r.Date.trim() === searchDate);
+            
+            if (row) {
+                document.getElementById('date-title').innerText = `February ${day}`;
+                const imageName = row.ImageName.trim();
+                document.getElementById('display-img').src = "images/" + imageName;
+                document.getElementById('display-msg').innerText = row.Message;
+                initScratch(); 
             }
         }
 
-        // --- SCRATCH CARD LOGIC ---
+        function renderCalendar(currentView) {
+            const grid = document.getElementById('calendar-wrapper');
+            grid.innerHTML = ''; 
+            for (let i = 1; i <= 28; i++) {
+                const bubble = document.createElement('div');
+                bubble.innerText = i;
+                bubble.className = 'day-bubble';
+                if (i === currentView) bubble.classList.add('active'); 
+                else if (i <= actualDayNum) {
+                    bubble.classList.add('unlocked'); 
+                    bubble.onclick = () => { renderContent(i); renderCalendar(i); }; 
+                } else {
+                    bubble.classList.add('locked'); bubble.innerHTML = '🔒';
+                }
+                grid.appendChild(bubble);
+            }
+            const left = 28 - actualDayNum;
+            document.getElementById('days-left').innerText = `${left} SURPRISES REMAINING...`;
+            calcDist();
+        }
+
         function initScratch() {
             const canvas = document.getElementById('scratch-canvas');
             const ctx = canvas.getContext('2d');
-            const container = canvas.parentElement;
-            canvas.width = container.offsetWidth;
-            canvas.height = container.offsetHeight;
-
-            ctx.fillStyle = '#C0C0C0'; // Silver color
+            const parent = canvas.parentElement;
+            canvas.width = parent.offsetWidth;
+            canvas.height = parent.offsetHeight;
+            
+            // Premium Silver Gradient
+            const grd = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            grd.addColorStop(0, '#bdc3c7');
+            grd.addColorStop(1, '#2c3e50');
+            ctx.fillStyle = grd;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = "white";
+            ctx.font = "bold 14px Outfit";
+            ctx.textAlign = "center";
+            ctx.fillText("SCRATCH TO READ ✨", canvas.width/2, canvas.height/2 + 5);
+            
             ctx.globalCompositeOperation = 'destination-out';
 
             function scratch(e) {
+                e.preventDefault();
                 const rect = canvas.getBoundingClientRect();
-                const x = (e.pageX || e.touches[0].pageX) - rect.left;
-                const y = (e.pageY || e.touches[0].pageY) - rect.top;
+                const x = (e.clientX || (e.touches ? e.touches[0].clientX : 0)) - rect.left;
+                const y = (e.clientY || (e.touches ? e.touches[0].clientY : 0)) - rect.top;
                 ctx.beginPath();
-                ctx.arc(x, y, 25, 0, Math.PI * 2);
+                ctx.arc(x, y, 25, 0, Math.PI*2);
                 ctx.fill();
             }
-
             canvas.addEventListener('mousemove', scratch);
             canvas.addEventListener('touchmove', scratch);
         }
 
-        // --- GAME LOGIC ---
-        let clicks = 0;
-        const target = document.getElementById('target-heart');
-        target.addEventListener('mouseover', move);
-        target.addEventListener('touchstart', move);
-        function move() {
-            if (clicks < 3) {
-                target.style.top = Math.random()*80+10 + "%";
-                target.style.left = Math.random()*80+10 + "%";
-                clicks++;
+        function sendHug() {
+            for(let i=0; i<15; i++) {
+                const h = document.createElement('div');
+                h.innerText = '❤️';
+                h.style.position = 'fixed';
+                h.style.left = '50%'; h.style.top = '50%';
+                h.style.transition = '2s'; h.style.pointerEvents = 'none'; h.style.zIndex = '3000';
+                document.body.appendChild(h);
+                setTimeout(() => {
+                    h.style.transform = `translate(${(Math.random()-0.5)*400}px, ${(Math.random()-0.5)*600}px) scale(3) rotate(${Math.random()*360}deg)`;
+                    h.style.opacity = '0';
+                }, 10);
+                setTimeout(() => h.remove(), 2000);
             }
         }
-        target.addEventListener('click', () => {
-            document.getElementById('game-screen').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            loadContent();
-        });
+        
+        function calcDist() {
+            const SG_LAT = 1.3521; const SG_LON = 103.8198;
+            const R = 6371; 
+            const dLat = (SG_LAT-YOUR_LAT) * Math.PI/180;
+            const dLon = (SG_LON-YOUR_LON) * Math.PI/180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(YOUR_LAT*Math.PI/180)*Math.cos(SG_LAT*Math.PI/180)*Math.sin(dLon/2)**2;
+            const d = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+            document.getElementById('distance-tag').innerText = `📍 ${d} KM APART, BUT TOGETHER FOREVER`;
+        }
 
-        // Distance Calc
-        const R = 6371;
-        const dLat = (SG_CITY.lat - YOUR_CITY.lat) * Math.PI/180;
-        const dLon = (SG_CITY.lon - YOUR_CITY.lon) * Math.PI/180;
-        const a = Math.sin(dLat/2)**2 + Math.cos(YOUR_CITY.lat*Math.PI/180) * Math.cos(SG_CITY.lat*Math.PI/180) * Math.sin(dLon/2)**2;
-        const dist = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
-        document.getElementById('dist-val').innerText = `📍 ${dist} km away, but thinking of you.`;
+        init();
     </script>
 </body>
 </html>
