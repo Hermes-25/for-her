@@ -160,13 +160,13 @@
             if (row) {
                 // Try to get name from column "ImageName" (case insensitive)
                 const rawName = row.ImageName || row.imagename || row.IMAGE ;
-                const imageName = rawName ? rawName.trim() : `${searchDate}.jpg`;
+                const imageName = rawName ? rawName.trim() : `${searchDate}.jpg.jpg`;
                 
                 imgElement.src = imageName;
                 msgElement.innerText = row.Message || row.message || "I love you! (Message missing in sheet)";
             } else {
                 // FALLBACK: If sheet row is missing, guess the image name
-                imgElement.src = `${searchDate}.jpg`;
+                imgElement.src = `${searchDate}.jpg.jpg`;
                 msgElement.innerText = "Check your Google Sheet for this date!";
             }
             
