@@ -2,99 +2,164 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>28 Days of Us</title>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@300;600&display=swap" rel="stylesheet">
     <style>
         :root { --pink: #ff85a1; --dark-pink: #ff4d6d; --bg: #fff5f5; }
-        body { background-color: var(--bg); font-family: 'Montserrat', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden; text-align: center; color: #4a4a4a; }
-        #game-screen { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .heart-button { font-size: 60px; cursor: pointer; position: absolute; transition: all 0.3s ease; user-select: none; z-index: 101; }
-        .container { width: 90%; max-width: 450px; display: none; padding: 20px; animation: fadeIn 1.2s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        .polaroid { background: white; padding: 15px 15px 60px 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); transform: rotate(-2deg); margin-bottom: 20px; border-radius: 2px; }
-        .polaroid img { width: 100%; height: 380px; object-fit: cover; border: 1px solid #f0f0f0; }
-        h1 { font-family: 'Dancing Script', cursive; font-size: 2.5rem; color: var(--dark-pink); margin: 10px 0; }
-        .msg-box { font-size: 1.1rem; line-height: 1.6; font-style: italic; background: white; padding: 20px; border-radius: 15px; }
-        .btn-yes { background: var(--dark-pink); color: white; padding: 15px 35px; border-radius: 30px; border: none; font-size: 1.2rem; cursor: pointer; }
+        body { background-color: var(--bg); font-family: 'Montserrat', sans-serif; margin: 0; min-height: 100vh; overflow-x: hidden; color: #4a4a4a; display: flex; align-items: center; justify-content: center; }
+        
+        /* Game Screen */
+        #game-screen { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .heart-button { font-size: 60px; cursor: pointer; position: absolute; transition: all 0.3s ease; user-select: none; }
+
+        /* Main Content */
+        .container { width: 90%; max-width: 450px; display: none; padding: 20px; animation: fadeIn 1.5s; z-index: 10; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Floating Polaroid */
+        .polaroid-wrap { perspective: 1000px; margin-bottom: 30px; }
+        .polaroid { background: white; padding: 15px 15px 60px 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-radius: 2px; animation: sway 4s ease-in-out infinite alternate; }
+        @keyframes sway { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+        .polaroid img { width: 100%; height: 350px; object-fit: cover; border: 1px solid #f0f0f0; pointer-events: none; }
+
+        /* Scratch Card */
+        .scratch-container { position: relative; width: 100%; min-height: 100px; background: white; border-radius: 15px; overflow: hidden; margin-top: 20px; }
+        #scratch-canvas { position: absolute; top: 0; left: 0; cursor: crosshair; z-index: 2; touch-action: none; }
+        .inner-message { padding: 20px; font-style: italic; line-height: 1.6; z-index: 1; }
+
+        /* Heart Explosion */
+        .particle { position: fixed; pointer-events: none; z-index: 999; animation: fly 1s ease-out forwards; }
+        @keyframes fly { to { transform: translate(var(--x), var(--y)) rotate(360deg); opacity: 0; } }
+
+        .controls { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+        .hug-btn { background: var(--dark-pink); color: white; border: none; padding: 12px 25px; border-radius: 25px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 15px rgba(255, 77, 109, 0.3); }
+        .distance { font-size: 0.75rem; color: #888; }
     </style>
 </head>
 <body>
 
     <div id="game-screen">
-        <h2 id="game-instr">Catch the heart to see today's surprise! ❤️</h2>
-        <div id="target-heart" class="heart-button" style="top:50%; left:50%; transform:translate(-50%, -50%);">💝</div>
+        <h2 style="padding: 20px; text-align: center;">Catch the 💝 to unlock Day <span id="day-num">1</span></h2>
+        <div id="target-heart" class="heart-button">💝</div>
     </div>
 
     <div class="container" id="main-content">
-        <div id="daily-view">
-            <h1 id="day-title">Happy February!</h1>
+        <h1 id="title-text">February 1st</h1>
+        
+        <div class="polaroid-wrap">
             <div class="polaroid">
-                <img id="today-img" src="" alt="Our Memory">
+                <img id="today-img" src="" alt="Memory">
             </div>
-            <div class="msg-box" id="today-msg"></div>
         </div>
 
-        <div id="valentine-view" style="display: none;">
-            <h1>Will you be my Valentine?</h1>
-            <div style="font-size: 80px; margin: 30px;">💍</div>
-            <button class="btn-yes" onclick="answer()">YES! ❤️</button>
+        <p style="font-size: 0.9rem;">👇 Scratch to reveal my note</p>
+        <div class="scratch-container">
+            <div class="inner-message" id="today-msg">Loading message...</div>
+            <canvas id="scratch-canvas"></canvas>
+        </div>
+
+        <div class="controls">
+            <button class="hug-btn" onclick="explodeHearts(event)">Send Me A Hug 🤗</button>
+            <div class="distance" id="dist-val">Calculating...</div>
         </div>
     </div>
 
+    <div id="player" style="display:none"></div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script>
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSKqWbkDWDomm_5dSZhriAHQAx3EG_jPrulurvlmkdlUl7XoF4pkz5KT-5JMHyauG_JbzQBDAYsdbuS/pub?gid=0&single=true&output=csv'; 
-        const YOUR_WHATSAPP = '917217680436'; // Format: 919876543210
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSKqWbkDWDomm_5dSZhriAHQAx3EG_jPrulurvlmkdlUl7XoF4pkz5KT-5JMHyauG_JbzQBDAYsdbuS/pub?gid=0&single=true&output=csv';
+        const YOUR_CITY = { lat: 28.6139, lon: 77.2090 }; // Update your Lat/Lon
+        const SG_CITY = { lat: 1.3521, lon: 103.8198 };
 
-        const target = document.getElementById('target-heart');
-        let clicks = 0;
-        
-        function moveHeart() {
-            if (clicks < 3) {
-                target.style.top = Math.random() * 70 + 15 + "%";
-                target.style.left = Math.random() * 70 + 15 + "%";
-                clicks++;
-            }
-        }
-        target.addEventListener('mouseover', moveHeart);
-        target.addEventListener('touchstart', moveHeart);
-
-        target.addEventListener('click', () => {
-            document.getElementById('game-screen').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            loadData();
-        });
-
-        function loadData() {
-            // Get SG Date
+        // --- DATA LOGIC ---
+        function loadContent() {
             const options = { timeZone: 'Asia/Singapore', year: 'numeric', month: '2-digit', day: '2-digit' };
             const formatter = new Intl.DateTimeFormat('en-CA', options);
-            const sgDate = formatter.format(new Date()); // YYYY-MM-DD
+            const sgDate = formatter.format(new Date());
+            const dayNum = new Date().toLocaleString("en-US", {timeZone: "Asia/Singapore", day: "numeric"});
+            document.getElementById('day-num').innerText = dayNum;
 
             Papa.parse(SHEET_URL, {
                 download: true, header: true,
                 complete: function(results) {
-                    const data = results.data;
-                    const todayData = data.find(row => row.Date && row.Date.trim() === sgDate);
-
-                    if (sgDate === '2026-02-04') {
-                        document.getElementById('daily-view').style.display = 'none';
-                        document.getElementById('valentine-view').style.display = 'block';
-                    } else if (todayData) {
-                        document.getElementById('today-img').src = todayData.ImageName.trim();
-                        document.getElementById('today-msg').innerText = todayData.Message;
-                        document.getElementById('day-title').innerText = "February " + new Date().getDate();
-                    } else {
-                        document.getElementById('today-msg').innerText = "Come back tomorrow for a new surprise! ❤️";
+                    const today = results.data.find(r => r.Date && r.Date.trim() === sgDate);
+                    if (today) {
+                        document.getElementById('today-img').src = "images/" + today.ImageName.trim();
+                        document.getElementById('today-msg').innerText = today.Message;
+                        document.getElementById('title-text').innerText = "February " + dayNum;
+                        initScratch();
                     }
                 }
             });
         }
 
-        function answer() {
-            window.location.href = `https://wa.me/${YOUR_WHATSAPP}?text=I+SAID+YES!+❤️`;
+        // --- HEART EXPLOSION ---
+        function explodeHearts(e) {
+            for(let i=0; i<15; i++) {
+                const p = document.createElement('div');
+                p.innerHTML = '❤️';
+                p.className = 'particle';
+                p.style.left = e.clientX + 'px';
+                p.style.top = e.clientY + 'px';
+                p.style.setProperty('--x', (Math.random()-0.5)*300 + 'px');
+                p.style.setProperty('--y', (Math.random()-0.5)*300 + 'px');
+                document.body.appendChild(p);
+                setTimeout(() => p.remove(), 1000);
+            }
         }
+
+        // --- SCRATCH CARD LOGIC ---
+        function initScratch() {
+            const canvas = document.getElementById('scratch-canvas');
+            const ctx = canvas.getContext('2d');
+            const container = canvas.parentElement;
+            canvas.width = container.offsetWidth;
+            canvas.height = container.offsetHeight;
+
+            ctx.fillStyle = '#C0C0C0'; // Silver color
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.globalCompositeOperation = 'destination-out';
+
+            function scratch(e) {
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.pageX || e.touches[0].pageX) - rect.left;
+                const y = (e.pageY || e.touches[0].pageY) - rect.top;
+                ctx.beginPath();
+                ctx.arc(x, y, 25, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            canvas.addEventListener('mousemove', scratch);
+            canvas.addEventListener('touchmove', scratch);
+        }
+
+        // --- GAME LOGIC ---
+        let clicks = 0;
+        const target = document.getElementById('target-heart');
+        target.addEventListener('mouseover', move);
+        target.addEventListener('touchstart', move);
+        function move() {
+            if (clicks < 3) {
+                target.style.top = Math.random()*80+10 + "%";
+                target.style.left = Math.random()*80+10 + "%";
+                clicks++;
+            }
+        }
+        target.addEventListener('click', () => {
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            loadContent();
+        });
+
+        // Distance Calc
+        const R = 6371;
+        const dLat = (SG_CITY.lat - YOUR_CITY.lat) * Math.PI/180;
+        const dLon = (SG_CITY.lon - YOUR_CITY.lon) * Math.PI/180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(YOUR_CITY.lat*Math.PI/180) * Math.cos(SG_CITY.lat*Math.PI/180) * Math.sin(dLon/2)**2;
+        const dist = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+        document.getElementById('dist-val').innerText = `📍 ${dist} km away, but thinking of you.`;
     </script>
 </body>
 </html>
