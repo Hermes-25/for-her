@@ -42,12 +42,11 @@
         .day-bubble.locked { opacity: 0.2; cursor: not-allowed; }
 
         .scratch-box { position: relative; width: 100%; height: 100px; overflow: hidden; border-radius: 15px; margin-top: 15px; background: rgba(255,255,255,0.05); }
-        .hidden-text { position: absolute; inset: 0; display:flex; align-items:center; justify-content:center; padding: 15px; font-style: italic; font-size: 1rem; text-shadow: 0 1px 3px rgba(0,0,0,0.5); line-height: 1.4; }
+        .hidden-text { position: absolute; inset: 0; display:flex; align-items:center; justify-content:center; padding: 15px; font-style: italic; font-size: 1rem; text-shadow: 0 1px 3px rgba(0,0,0,0.5); line-height: 1.4; color: white; }
         canvas { position: absolute; top: 0; left: 0; z-index: 2; touch-action: none; }
 
         h1 { font-family: 'Playfair Display', serif; font-size: 2.2rem; margin: 15px 0; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
         .hug-btn { background: white; color: var(--primary); border: none; padding: 12px 30px; border-radius: 50px; font-weight: 700; margin-top: 10px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: 0.3s; }
-        .hug-btn:active { transform: scale(0.95); }
         
         #game-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(10px); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.5s; }
         .heart-floater { font-size: 90px; cursor: pointer; animation: pulse 1s infinite alternate; filter: drop-shadow(0 0 20px var(--primary)); }
@@ -59,13 +58,13 @@
 <body>
 
     <div id="game-screen">
-        <h2 style="font-family:'Playfair Display'; text-align:center; padding: 0 20px;">Every day is a gift with you...</h2>
+        <h2 style="font-family:'Playfair Display'; text-align:center; padding: 0 20px;">Every day is a gift...</h2>
         <div id="target-heart" class="heart-floater">💝</div>
-        <p style="color:#666; margin-top:30px; letter-spacing: 1px; font-size: 0.8rem;">CATCH THE HEART TO ENTER</p>
+        <p style="color:#666; margin-top:30px; letter-spacing: 1px; font-size: 0.8rem;">CATCH THE HEART TO UNLOCK TODAY</p>
     </div>
 
     <div id="main-app" class="hidden">
-        <h1 id="date-title">February 1</h1>
+        <h1 id="date-title"></h1>
         
         <div class="glass-panel">
             <div class="polaroid">
@@ -89,19 +88,12 @@
         <div style="font-size: 0.75rem; opacity: 0.7; margin-top: 10px; font-weight: 300;" id="distance-tag"></div>
     </div>
 
-    <div id="valentine-view" class="hidden" style="position:fixed; inset:0; background:#ff4d6d; z-index:2000; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding: 20px;">
-        <h1 style="font-size: 3.5rem; line-height: 1;">Will you be<br>my Valentine?</h1>
-        <div style="font-size: 120px; margin: 40px; animation: pulse 1s infinite alternate;">💍</div>
-        <button onclick="window.location.href='https://wa.me/YOUR_PHONE_NUMBER?text=YES!+I+WILL!+❤️'" style="background:white; color:#ff4d6d; border:none; padding: 20px 60px; border-radius: 50px; font-size: 1.6rem; font-weight:900; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">YES! ❤️</button>
-    </div>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script>
         // --- MANDATORY SETUP ---
-        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSKqWbkDWDomm_5dSZhriAHQAx3EG_jPrulurvlmkdlUl7XoF4pkz5KT-5JMHyauG_JbzQBDAYsdbuS/pubhtml?gid=0&single=true'; // The .csv link from Publish to Web
-        const YOUR_LAT = 26.18; // Update to your Latitude
-        const YOUR_LON = 26.1921; // Update to your Longitude
-        const YOUR_PHONE = '917217680436'; // For the WhatsApp Yes button
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSKqWbkDWDomm_5dSZhriAHQAx3EG_jPrulurvlmkdlUl7XoF4pkz5KT-5JMHyauG_JbzQBDAYsdbuS/pubhtml?gid=0&single=true'; 
+        const YOUR_LAT = 26.1872; 
+        const YOUR_LON = 91.6917; 
         // ------------------------
 
         let allData = [];
@@ -114,27 +106,18 @@
         }
 
         function init() {
-            // Get SG Date
             const options = { timeZone: 'Asia/Singapore', year: 'numeric', month: '2-digit', day: '2-digit' };
             const formatter = new Intl.DateTimeFormat('en-CA', options);
             const sgDate = formatter.format(new Date());
             actualDayNum = parseInt(sgDate.split('-')[2]); 
 
-            // Proposal Day Trigger
-            if (sgDate === '2026-02-14') {
-                document.getElementById('valentine-view').classList.remove('hidden');
-                document.getElementById('game-screen').classList.add('hidden');
-                return;
-            }
-
             loadData(actualDayNum);
         }
 
-        // Heart Catch Game
         const target = document.getElementById('target-heart');
         let clicks = 0;
         function moveHeart() {
-            if (clicks < 3) {
+            if (clicks < 2) {
                 target.style.transition = "0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
                 target.style.transform = `translate(${Math.random()*160-80}px, ${Math.random()*160-80}px)`;
                 clicks++;
@@ -160,7 +143,6 @@
         }
 
         function renderContent(day) {
-            // Corrected Row Finder for dates like 2026-02-01
             const searchDate = `2026-02-${day.toString().padStart(2, '0')}`;
             const row = allData.find(r => r.Date && r.Date.trim() === searchDate);
             
@@ -201,7 +183,6 @@
             canvas.width = parent.offsetWidth;
             canvas.height = parent.offsetHeight;
             
-            // Premium Silver Gradient
             const grd = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
             grd.addColorStop(0, '#bdc3c7');
             grd.addColorStop(1, '#2c3e50');
