@@ -150,24 +150,38 @@
         }
         
         function renderContent(day) {
-            const searchDate = `2026-02-${day.toString().padStart(2, '0')}`;
-            const row = allData.find(r => r.Date && r.Date.trim() === searchDate);
+            // This creates "01", "02", etc.
+            const dayStr = day.toString().padStart(2, '0');
+            const searchDate = `2026-02-${dayStr}`;
+            
+            // Find row where Date column CONTAINS the day (more flexible)
+            const row = allData.find(r => {
+                const dateVal = r.Date || r.date || "";
+                return dateVal.includes(dayStr) && dateVal.includes('2026');
+            });
             
             document.getElementById('date-title').innerText = `February ${day}`;
             const imgElement = document.getElementById('display-img');
             const msgElement = document.getElementById('display-msg');
+            const errBox = document.getElementById('error-debug');
         
             if (row) {
-                // Try to get name from column "ImageName" (case insensitive)
-                const rawName = row.ImageName || row.imagename || row.IMAGE ;
-                const imageName = rawName ? rawName.trim() : `${searchDate}.jpg.jpg`;
+                // Clear errors if we found the row
+                errBox.style.display = 'none';
                 
-                imgElement.src = imageName;
-                msgElement.innerText = row.Message || row.message || "I love you! (Message missing in sheet)";
+                // Get Image Name
+                const rawName = row.ImageName || row.imagename || row.IMAGE;
+                imgElement.src = rawName ? rawName.trim() : `${searchDate}.jpg`;
+                
+                // Get Message
+                msgElement.innerText = row.Message || row.message || row.MESSAGE || "Message column not found in sheet!";
             } else {
-                // FALLBACK: If sheet row is missing, guess the image name
-                imgElement.src = `${searchDate}.jpg.jpg`;
-                msgElement.innerText = "Check your Google Sheet for this date!";
+                // Fallback if row isn't found
+                errBox.style.display = 'block';
+                errBox.innerHTML = `⚠️ <b>Data Sync Error</b><br>Could not find a row for Feb ${dayStr} in your Sheet.<br>Current Date Format in Sheet: <i>${allData[0] ? Object.keys(allData[0])[0] + ": " + allData[0][Object.keys(allData[0])[0]] : "Empty"}</i>`;
+                
+                imgElement.src = `${searchDate}.jpg`;
+                msgElement.innerText = "Check your Google Sheet date format!";
             }
             
             initScratch(); 
