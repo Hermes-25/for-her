@@ -48,7 +48,6 @@
       animation: gradientBG 14s ease infinite;
     }
 
-    /* subtle sparkles overlay */
     body::before{
       content:"";
       position:fixed;
@@ -105,7 +104,6 @@
       opacity:.9;
     }
 
-    /* polaroid frame */
     .polaroid{
       padding: 12px;
       border-radius: 22px;
@@ -148,9 +146,9 @@
       box-shadow: 0 10px 24px rgba(0,0,0,0.12);
       position: relative;
       z-index: 5;
+      text-align:left;
     }
 
-    /* scratch area */
     .scratch-box{
       position: relative;
       width: 100%;
@@ -163,7 +161,6 @@
       box-shadow: 0 12px 28px rgba(0,0,0,0.10);
     }
 
-    /* message - scrollable */
     .hidden-text{
       position: absolute;
       inset: 0;
@@ -174,10 +171,9 @@
       line-height: 1.5;
       color: rgba(255,255,255,0.96);
       text-shadow: 0 8px 24px rgba(0,0,0,0.18);
-
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      z-index: 1; /* below canvas */
+      z-index: 1;
     }
 
     .hidden-text::-webkit-scrollbar{ width: 8px; }
@@ -198,7 +194,6 @@
       border-radius: 18px;
     }
 
-    /* NEW: disable canvas interaction after enough scratch so message can scroll */
     canvas.disabled{
       pointer-events:none;
     }
@@ -229,7 +224,6 @@
       transform: translateY(0px) scale(0.99);
     }
 
-    /* calendar */
     .calendar-grid{
       display:grid;
       grid-template-columns: repeat(7, 1fr);
@@ -284,7 +278,6 @@
       border: 1px dashed rgba(255,255,255,0.22);
     }
 
-    /* game screen */
     #game-screen{
       position:fixed;
       inset:0;
@@ -310,20 +303,20 @@
       text-shadow: 0 14px 38px rgba(0,0,0,0.18);
     }
 
-    /* wrapper that moves (JS translates this) */
     #heart-mover{
       transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       will-change: transform;
       display: inline-block;
     }
 
-    /* heart pulses (CSS transform separate from JS) */
     .heart-floater{
       font-size: 92px;
       cursor:pointer;
       animation: pulse 0.95s infinite alternate;
       filter: drop-shadow(0 0 22px rgba(255, 61, 127, 0.55));
       user-select: none;
+      opacity: 0.55;            /* will be set to 1 when data is ready */
+      pointer-events: none;     /* will be enabled when data is ready */
     }
 
     @keyframes pulse{
@@ -373,6 +366,9 @@
     <p style="color: rgba(255,255,255,0.75); margin-top:30px; letter-spacing: 1px; font-size: 0.8rem;">
       CATCH THE HEART TO UNLOCK TODAY
     </p>
+    <p id="loading-note" style="color: rgba(255,255,255,0.75); margin-top:8px; letter-spacing: 0.5px; font-size: 0.78rem;">
+      Loading surprises...
+    </p>
   </div>
 
   <div id="main-app" class="hidden">
@@ -412,19 +408,108 @@
     let allData = [];
     let actualDayNum = 1;
 
+    // Data gating (FIX #1)
+    let dataReady = false;
+
     function imageFailed(img) {
       const errBox = document.getElementById('error-debug');
       errBox.style.display = 'block';
       errBox.innerHTML = `⚠️ <b>File Error</b><br>Code tried to load: <i>"${img.src.split('/').pop()}"</i><br>Does this match your GitHub filename exactly?`;
     }
 
-    function init() {
+    // FIX #2: robust date normalization to YYYY-MM-DD
+    // IMPORTANT: For ambiguous 2/2/2026 dates, this assumes MM/DD/YYYY.
+    // If your sheet is DD/MM/YYYY, swap m and d in the slashed-date block.
+    function normalizeToISODate(raw) {
+      if (raw == null) return null;
+      const s = String(raw).trim();
+      if (!s) return null;
+
+      // ISO-ish: 2026-02-02 or 2026/02/02
+      const iso = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
+      if (iso) {
+        const y = iso[1];
+        const m = String(iso[2]).padStart(2, '0');
+        const d = String(iso[3]).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+
+      // Slashed: 2/2/2026
+      const sl = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (sl) {
+        const a = parseInt(sl[1], 10);
+        const b = parseInt(sl[2], 10);
+        const y = sl[3];
+
+        // ASSUME MM/DD/YYYY (US). If your sheet is DD/MM/YYYY, swap these:
+        const m = String(a).padStart(2, '0');
+        const d = String(b).padStart(2, '0');
+
+        return `${y}-${m}-${d}`;
+      }
+
+      // Fallback parse: "Feb 2, 2026"
+      const dt = new Date(s);
+      if (!isNaN(dt.getTime())) {
+        const y = dt.getFullYear();
+        const m = String(dt.getMonth() + 1).padStart(2, '0');
+        const d = String(dt.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+
+      return null;
+    }
+
+    // FIX #1 + #3: load as Promise + cache-buster
+    function loadData() {
+      const url = `${SHEET_URL}&cache=${Date.now()}`;
+      return new Promise((resolve, reject) => {
+        Papa.parse(url, {
+          download: true,
+          header: true,
+          complete: function (results) {
+            allData = (results.data || []).filter(r => (r.Date || r.date || r.ImageName || r.Message));
+            dataReady = true;
+
+            // Enable heart clicking only after data is ready
+            const heart = document.getElementById('target-heart');
+            heart.style.opacity = '1';
+            heart.style.pointerEvents = 'auto';
+
+            const note = document.getElementById('loading-note');
+            if (note) note.innerText = 'Ready! Catch the heart.';
+
+            resolve();
+          },
+          error: function (err) {
+            reject(err);
+          }
+        });
+      });
+    }
+
+    async function init() {
+      // Use SG date as you intended
       const options = { timeZone: 'Asia/Singapore', year: 'numeric', month: '2-digit', day: '2-digit' };
       const formatter = new Intl.DateTimeFormat('en-CA', options);
-      const sgDate = formatter.format(new Date());
+      const sgDate = formatter.format(new Date()); // "YYYY-MM-DD"
       actualDayNum = parseInt(sgDate.split('-')[2], 10);
 
-      loadData();
+      // Disable heart until data loads
+      const heart = document.getElementById('target-heart');
+      heart.style.opacity = '0.55';
+      heart.style.pointerEvents = 'none';
+
+      try {
+        await loadData();
+      } catch (e) {
+        const note = document.getElementById('loading-note');
+        if (note) note.innerText = 'Failed to load surprises.';
+        const errBox = document.getElementById('error-debug');
+        errBox.style.display = 'block';
+        errBox.innerHTML = `⚠️ <b>Data Load Failed</b><br>${String(e)}<br><br>
+          Check if your Google Sheet is <b>published</b> and the link is correct.`;
+      }
     }
 
     // Heart move logic
@@ -432,6 +517,9 @@
     let clicks = 0;
 
     function moveHeart() {
+      // FIX #1: hard gate
+      if (!dataReady) return;
+
       if (clicks < 2) {
         heartMover.style.transform = `translate(${Math.random() * 160 - 80}px, ${Math.random() * 160 - 80}px)`;
         clicks++;
@@ -450,24 +538,15 @@
 
     document.getElementById('target-heart').addEventListener('click', moveHeart);
 
-    function loadData() {
-      Papa.parse(SHEET_URL, {
-        download: true,
-        header: true,
-        complete: function (results) {
-          allData = (results.data || []).filter(r => (r.Date || r.date || r.ImageName || r.Message));
-          // We render only after unlock (to avoid canvas sizing = 0)
-        }
-      });
-    }
-
     function renderContent(day) {
-      const dayStr = day.toString().padStart(2, '0');
+      const dayStr = String(day).padStart(2, '0');
       const searchDate = `2026-02-${dayStr}`;
 
+      // FIX #2: exact match after normalization
       const row = allData.find(r => {
-        const dateVal = (r.Date || r.date || "").toString().trim();
-        return dateVal.includes(dayStr) && dateVal.includes('2026');
+        const raw = (r.Date || r.date || "").toString();
+        const iso = normalizeToISODate(raw);
+        return iso === searchDate;
       });
 
       document.getElementById('date-title').innerText = `February ${day}`;
@@ -485,10 +564,17 @@
         msgElement.innerText = (row.Message || row.message || row.MESSAGE || "Message column not found in sheet!").toString();
       } else {
         errBox.style.display = 'block';
-        errBox.innerHTML = `⚠️ <b>Data Sync Error</b><br>Could not find a row for Feb ${dayStr} in your Sheet.`;
+        // Extra debug info to help you instantly see what dates are coming in
+        const sampleDates = allData.slice(0, 8).map(r => (r.Date || r.date || '')).join(' | ');
+        errBox.innerHTML = `⚠️ <b>Data Sync Error</b><br>
+          Could not find a row for <b>${searchDate}</b> in your Sheet.<br><br>
+          <b>Quick debug:</b><br>
+          - actualDayNum = ${actualDayNum}<br>
+          - rows loaded = ${allData.length}<br>
+          - sample raw dates = ${sampleDates}`;
 
         imgElement.src = `${searchDate}.jpg.jpg`;
-        msgElement.innerText = "Check your Google Sheet date format!";
+        msgElement.innerText = "Check your Google Sheet date format (or DD/MM vs MM/DD).";
       }
 
       initScratch();
@@ -529,7 +615,6 @@
       canvas.width = parent.offsetWidth;
       canvas.height = parent.offsetHeight;
 
-      // re-enable each time we load a day
       canvas.classList.remove("disabled");
 
       ctx.globalCompositeOperation = 'source-over';
@@ -571,7 +656,6 @@
         }
         const ratio = transparent / (img.length / 4);
 
-        // adjust this threshold if you want earlier/later disable
         if (ratio > 0.45) {
           canvas.classList.add("disabled");
         }
