@@ -337,7 +337,10 @@
 <body>
   <div id="game-screen">
     <h2>Every day is a gift...</h2>
-    <div id="target-heart" class="heart-floater">💝</div>
+    <div id="heart-mover">
+      <div id="target-heart" class="heart-floater">💝</div>
+    </div>
+    
     <p style="color: rgba(255,255,255,0.75); margin-top:30px; letter-spacing: 1px; font-size: 0.8rem; text-align:center;">
       CATCH THE HEART TO UNLOCK TODAY
     </p>
@@ -397,7 +400,7 @@
       loadData(actualDayNum);
     }
 
-    const target = document.getElementById('target-heart');
+    const target = document.getElementById('heart-mover');
     let clicks = 0;
 
     function moveHeart() {
@@ -407,10 +410,15 @@
         clicks++;
       } else {
         document.getElementById('game-screen').style.opacity = '0';
-        setTimeout(() => {
-          document.getElementById('game-screen').style.display = 'none';
-          document.getElementById('main-app').classList.remove('hidden');
-        }, 500);
+      setTimeout(() => {
+        document.getElementById('game-screen').style.display = 'none';
+        document.getElementById('main-app').classList.remove('hidden');
+      
+        // IMPORTANT: now elements have real sizes, so initScratch will work
+        renderContent(actualDayNum);
+        renderCalendar(actualDayNum);
+      }, 500);
+
       }
     }
     target.addEventListener('click', moveHeart);
