@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>28 Days of Us</title>
+    <title>Penguin's Bday</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=Playfair+Display:ital,wght@1,600&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #ff4d6d; --glass: rgba(255, 255, 255, 0.15); --border: rgba(255, 255, 255, 0.25); }
@@ -80,7 +80,7 @@
         </div>
 
         <div class="glass-panel" style="width: 92%; max-width: 420px;">
-            <h3 style="margin: 0 0 15px 0; font-size: 0.9rem; opacity: 0.7; letter-spacing: 2px; font-weight: 300;">OUR FEBRUARY JOURNEY</h3>
+            <h3 style="margin: 0 0 15px 0; font-size: 0.9rem; opacity: 0.7; letter-spacing: 2px; font-weight: 300;">My Baby's Month</h3>
             <div class="calendar-grid" id="calendar-wrapper"></div>
             <div id="days-left" style="margin-top: 20px; font-size: 0.8rem; opacity: 0.6; font-weight: 300;"></div>
         </div>
@@ -264,7 +264,7 @@
             const dLon = (SG_LON-YOUR_LON) * Math.PI/180;
             const a = Math.sin(dLat/2)**2 + Math.cos(YOUR_LAT*Math.PI/180)*Math.cos(SG_LAT*Math.PI/180)*Math.sin(dLon/2)**2;
             const d = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
-            document.getElementById('distance-tag').innerText = `📍 ${d} KM APART, BUT TOGETHER FOREVER`;
+            document.getElementById('distance-tag').innerText = `📍 3997 KM APART, BUT TOGETHER FOREVER`;
         }
 
         init();
