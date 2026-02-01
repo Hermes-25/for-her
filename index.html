@@ -171,7 +171,7 @@
                 
                 // Get Image Name
                 const rawName = row.ImageName || row.imagename || row.IMAGE;
-                imgElement.src = rawName ? rawName.trim() : `${searchDate}.jpg`;
+                imgElement.src = rawName ? rawName.trim() : `${searchDate}.jpg.jpg`;
                 
                 // Get Message
                 msgElement.innerText = row.Message || row.message || row.MESSAGE || "Message column not found in sheet!";
@@ -180,7 +180,7 @@
                 errBox.style.display = 'block';
                 errBox.innerHTML = `⚠️ <b>Data Sync Error</b><br>Could not find a row for Feb ${dayStr} in your Sheet.<br>Current Date Format in Sheet: <i>${allData[0] ? Object.keys(allData[0])[0] + ": " + allData[0][Object.keys(allData[0])[0]] : "Empty"}</i>`;
                 
-                imgElement.src = `${searchDate}.jpg`;
+                imgElement.src = `${searchDate}.jpg.jpg`;
                 msgElement.innerText = "Check your Google Sheet date format!";
             }
             
