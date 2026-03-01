@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Penguin's Bday</title>
-
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=Playfair+Display:ital,wght@1,600&display=swap" rel="stylesheet">
 
   <style>
@@ -76,8 +75,6 @@
       margin: 10px 0 18px;
       letter-spacing: 0.2px;
       text-shadow: 0 10px 30px rgba(0,0,0,0.18);
-      text-align:center;
-      padding: 0 10px;
     }
 
     .glass-panel{
@@ -149,7 +146,7 @@
       border-radius: 14px;
       box-shadow: 0 10px 24px rgba(0,0,0,0.12);
       position: relative;
-      z-index: 6;
+      z-index: 5;
       text-align:left;
       line-height: 1.35;
       word-break: break-word;
@@ -219,7 +216,7 @@
       box-shadow: 0 14px 30px rgba(255, 61, 127, 0.28);
       transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
       position: relative;
-      z-index: 6;
+      z-index: 5;
     }
 
     .hug-btn:hover{
@@ -238,7 +235,7 @@
       margin-top: 12px;
       padding: 2px;
       position: relative;
-      z-index: 6;
+      z-index: 5;
     }
 
     .day-bubble{
@@ -252,15 +249,21 @@
       cursor:pointer;
       user-select:none;
 
-      background: rgba(255,255,255,0.86);
-      color: rgba(255, 30, 90, 0.92);
-      border: 1px solid rgba(255,255,255,0.6);
-      box-shadow: 0 10px 22px rgba(0,0,0,0.10);
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.22);
+      color: rgba(255,255,255,0.88);
 
       transition: transform .18s ease, box-shadow .18s ease, background .18s ease, opacity .18s ease;
     }
 
-    .day-bubble:hover{
+    /* We keep your "unlocked" look, but now EVERYTHING is unlocked forever */
+    .day-bubble.unlocked{
+      background: rgba(255,255,255,0.86);
+      color: rgba(255, 30, 90, 0.92);
+      border: 1px solid rgba(255,255,255,0.6);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.10);
+    }
+    .day-bubble.unlocked:hover{
       transform: translateY(-2px);
     }
 
@@ -270,8 +273,64 @@
       border:none;
       box-shadow: 0 0 0 5px rgba(255,255,255,0.22), 0 18px 40px rgba(255, 61, 127, 0.35);
       transform: scale(1.08);
-      z-index: 7;
+      z-index: 6;
     }
+
+    /* Keeping this class in CSS in case you ever re-enable locks later */
+    .day-bubble.locked{
+      opacity: 0.32;
+      cursor:not-allowed;
+      background: rgba(255,255,255,0.10);
+      border: 1px dashed rgba(255,255,255,0.22);
+    }
+
+    #game-screen{
+      position:fixed;
+      inset:0;
+      z-index:1000;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+
+      background: rgba(255, 175, 206, 0.16);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      transition: 0.5s;
+      text-align: center;
+      padding: 0 20px;
+    }
+
+    #game-screen h2{
+      margin:0 0 14px;
+      font-family:'Playfair Display';
+      font-weight: 600;
+      color: rgba(255,255,255,0.96);
+      text-shadow: 0 14px 38px rgba(0,0,0,0.18);
+    }
+
+    #heart-mover{
+      transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      will-change: transform;
+      display: inline-block;
+    }
+
+    .heart-floater{
+      font-size: 92px;
+      cursor:pointer;
+      animation: pulse 0.95s infinite alternate;
+      filter: drop-shadow(0 0 22px rgba(255, 61, 127, 0.55));
+      user-select: none;
+      opacity: 0.55;            /* will be set to 1 when data is ready */
+      pointer-events: none;     /* will be enabled when data is ready */
+    }
+
+    @keyframes pulse{
+      from{ transform: scale(1); }
+      to{ transform: scale(1.08); }
+    }
+
+    .hidden{ display:none; }
 
     h3{
       margin: 0 0 14px 0;
@@ -280,7 +339,7 @@
       font-weight: 500;
       color: rgba(255,255,255,0.82);
       position: relative;
-      z-index: 6;
+      z-index: 5;
     }
 
     #days-left{
@@ -289,7 +348,7 @@
       opacity: 0.78;
       font-weight: 400;
       position: relative;
-      z-index: 6;
+      z-index: 5;
     }
 
     #distance-tag{
@@ -298,21 +357,33 @@
       margin-top: 10px;
       font-weight: 400;
       text-shadow: 0 10px 24px rgba(0,0,0,0.14);
-      position: relative;
-      z-index: 6;
     }
   </style>
 </head>
 
 <body>
-  <div id="main-app">
-    <h1 id="date-title">Loading…</h1>
+  <div id="game-screen">
+    <h2>Every day is a gift...</h2>
+
+    <div id="heart-mover">
+      <div id="target-heart" class="heart-floater">💝</div>
+    </div>
+
+    <p style="color: rgba(255,255,255,0.75); margin-top:30px; letter-spacing: 1px; font-size: 0.8rem;">
+      CATCH THE HEART TO ENTER
+    </p>
+    <p id="loading-note" style="color: rgba(255,255,255,0.75); margin-top:8px; letter-spacing: 0.5px; font-size: 0.78rem;">
+      Loading surprises...
+    </p>
+  </div>
+
+  <div id="main-app" class="hidden">
+    <h1 id="date-title"></h1>
 
     <div class="glass-panel">
       <div class="polaroid">
-        <img id="display-img" src="" alt="Loading..." />
+        <img id="display-img" src="" alt="Loading...">
       </div>
-
       <div id="error-debug"></div>
 
       <div class="scratch-box">
@@ -320,7 +391,7 @@
         <canvas id="scratch-canvas"></canvas>
       </div>
 
-      <button class="hug-btn" id="hugBtn">Send Hug</button>
+      <button class="hug-btn" onclick="sendHug()">Send Hug 🤗</button>
     </div>
 
     <div class="glass-panel" style="width: 92%; max-width: 420px;">
@@ -335,71 +406,35 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-
   <script>
-    // =========================
-    // REQUIRED CONFIG
-    // =========================
+    // --- SETUP ---
     const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSKqWbkDWDomm_5dSZhriAHQAx3EG_jPrulurvlmkdlUl7XoF4pkz5KT-5JMHyauG_JbzQBDAYsdbuS/pub?gid=0&single=true&output=csv';
-
-    // Your portal is for Feb 2026 (fixed archive)
     const PORTAL_YEAR = 2026;
-    const PORTAL_MONTH = 2;   // February
-    const PORTAL_DAYS = 28;
+    const PORTAL_MONTH = 2;     // February
+    const PORTAL_DAYS = 28;     // Fixed archive
+    // --------------
 
-    // Forever mode: all unlocked always
-    const ALWAYS_UNLOCKED = true;
-
-    // Photo folder + default naming patterns (tries both)
-    const PHOTO_FOLDER = "photos";
-    const DEFAULT_EXTS = [".jpg.jpg", ".jpg", ".jpeg", ".png"];
-
-    // =========================
-    // State
-    // =========================
     let allData = [];
+    let selectedDay = 28;
+
+    // Data gating
     let dataReady = false;
-    let selectedDay = 28; // default (birthday)
-    let sgNowISO = null;
 
-    // =========================
-    // Helpers
-    // =========================
-    function $(id){ return document.getElementById(id); }
-
-    function showDebug(html){
-      const box = $("error-debug");
-      box.style.display = "block";
-      box.innerHTML = html;
-    }
-    function hideDebug(){
-      const box = $("error-debug");
-      box.style.display = "none";
-      box.innerHTML = "";
+    function showErr(html) {
+      const errBox = document.getElementById('error-debug');
+      errBox.style.display = 'block';
+      errBox.innerHTML = html;
     }
 
-    function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
-
-    function getSingaporeISODateParts(){
-      // Always use Singapore time
-      const fmt = new Intl.DateTimeFormat("en-CA", {
-        timeZone: "Asia/Singapore",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit"
-      });
-      const iso = fmt.format(new Date()); // YYYY-MM-DD
-      const [y,m,d] = iso.split("-").map(x => parseInt(x,10));
-      return { iso, y, m, d };
-    }
-
-    function portalISOForDay(day){
-      const dd = String(day).padStart(2,"0");
-      return `${PORTAL_YEAR}-${String(PORTAL_MONTH).padStart(2,"0")}-${dd}`;
+    function hideErr() {
+      const errBox = document.getElementById('error-debug');
+      errBox.style.display = 'none';
+      errBox.innerHTML = '';
     }
 
     // Robust date normalization to YYYY-MM-DD
-    // Note: ambiguous 2/2/2026 is assumed MM/DD/YYYY. If your sheet is DD/MM/YYYY, swap a/b.
+    // IMPORTANT: For ambiguous 2/2/2026 dates, this assumes MM/DD/YYYY.
+    // If your sheet is DD/MM/YYYY, swap m and d in the slashed-date block.
     function normalizeToISODate(raw) {
       if (raw == null) return null;
       const s = String(raw).trim();
@@ -421,7 +456,7 @@
         const b = parseInt(sl[2], 10);
         const y = sl[3];
 
-        // ASSUME MM/DD/YYYY (US). If DD/MM/YYYY, swap these two lines:
+        // ASSUME MM/DD/YYYY (US). If your sheet is DD/MM/YYYY, swap these:
         const m = String(a).padStart(2, '0');
         const d = String(b).padStart(2, '0');
 
@@ -440,85 +475,42 @@
       return null;
     }
 
-    function isAbsoluteURL(s){
-      return /^https?:\/\//i.test(s) || /^data:/i.test(s);
+    function getSGParts() {
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Singapore',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      const sgISO = formatter.format(new Date()); // "YYYY-MM-DD"
+      const [y, m, d] = sgISO.split('-').map(n => parseInt(n, 10));
+      return { sgISO, y, m, d };
     }
 
-    function resolveImageCandidates(rawName, portalISO){
-      // portalISO = "2026-02-14"
-      // We will try:
-      // 1) rawName if it is absolute URL or already includes folder
-      // 2) PHOTO_FOLDER/rawName if it looks like a filename
-      // 3) PHOTO_FOLDER/portalISO + ext variants
-      const candidates = [];
-
-      const clean = (rawName || "").toString().trim();
-
-      if (clean){
-        if (isAbsoluteURL(clean)) {
-          candidates.push(clean);
-        } else if (clean.startsWith(`${PHOTO_FOLDER}/`)) {
-          candidates.push(clean);
-        } else if (clean.includes("/") ) {
-          // relative path like "assets/x.jpg" -> use as-is
-          candidates.push(clean);
-        } else {
-          // looks like filename
-          candidates.push(`${PHOTO_FOLDER}/${clean}`);
-        }
-      }
-
-      // Default pattern:
-      for (const ext of DEFAULT_EXTS){
-        candidates.push(`${PHOTO_FOLDER}/${portalISO}${ext}`);
-      }
-
-      // de-dupe
-      return [...new Set(candidates)];
+    function portalISOForDay(day){
+      const dd = String(day).padStart(2, '0');
+      return `${PORTAL_YEAR}-${String(PORTAL_MONTH).padStart(2,'0')}-${dd}`;
     }
 
-    function setImageWithFallback(imgEl, candidates){
-      let idx = 0;
-
-      function tryNext(){
-        if (idx >= candidates.length){
-          showDebug(
-            `⚠️ <b>Image missing</b><br>
-             Tried:<br><div style="opacity:.9; font-size:.75rem; margin-top:6px;">${candidates.map(c => `• ${c}`).join("<br>")}</div>`
-          );
-          return;
-        }
-        const src = candidates[idx++];
-        imgEl.src = src;
-      }
-
-      imgEl.onerror = () => tryNext();
-      tryNext();
-    }
-
-    // =========================
-    // Data loading
-    // =========================
-    function loadData(){
+    function loadData() {
+      const url = `${SHEET_URL}&cache=${Date.now()}`;
       return new Promise((resolve, reject) => {
-        if (typeof Papa === "undefined"){
-          reject(new Error("PapaParse CDN did not load."));
-          return;
-        }
-
-        const url = `${SHEET_URL}&cache=${Date.now()}`; // cache-buster
         Papa.parse(url, {
           download: true,
           header: true,
           skipEmptyLines: true,
           complete: function (results) {
-            allData = (results.data || []).filter(r => {
-              const d = (r.Date || r.date || "").toString().trim();
-              const m = (r.Message || r.message || "").toString().trim();
-              const i = (r.ImageName || r.imagename || "").toString().trim();
-              return d || m || i;
-            });
+            allData = (results.data || []).filter(r => (r.Date || r.date || r.ImageName || r.Message));
             dataReady = true;
+
+            // Enable heart clicking only after data is ready
+            const heart = document.getElementById('target-heart');
+            heart.style.opacity = '1';
+            heart.style.pointerEvents = 'auto';
+
+            const note = document.getElementById('loading-note');
+            if (note) note.innerText = 'Ready! Catch the heart.';
+
             resolve();
           },
           error: function (err) {
@@ -528,114 +520,148 @@
       });
     }
 
-    function findRowForPortalDay(portalISO){
-      // Match by normalized date against portal ISO date
-      return allData.find(r => {
-        const raw = (r.Date || r.date || "").toString();
-        const iso = normalizeToISODate(raw);
-        return iso === portalISO;
-      });
+    async function init() {
+      // Default day:
+      // - If SG month is February: show that day (clamped to 1..28)
+      // - Otherwise (forever after February): show Day 28 by default
+      const { m, d } = getSGParts();
+      selectedDay = (m === 2) ? Math.min(PORTAL_DAYS, Math.max(1, d)) : 28;
+
+      // Disable heart until data loads
+      const heart = document.getElementById('target-heart');
+      heart.style.opacity = '0.55';
+      heart.style.pointerEvents = 'none';
+
+      try {
+        await loadData();
+      } catch (e) {
+        dataReady = false;
+        const note = document.getElementById('loading-note');
+        if (note) note.innerText = 'Failed to load surprises. Tap heart to enter anyway.';
+
+        // Even if sheet fails, we still allow entering and show fallback
+        heart.style.opacity = '1';
+        heart.style.pointerEvents = 'auto';
+
+        showErr(`⚠️ <b>Data Load Failed</b><br>${String(e)}<br><br>
+          The portal can still open, but messages/images will rely on fallback.<br>
+          Check if your Google Sheet is <b>published</b> and the link is correct.`);
+      }
     }
 
-    // =========================
-    // Render
-    // =========================
-    function renderCalendar(activeDay){
-      const grid = $("calendar-wrapper");
-      grid.innerHTML = "";
+    // Heart move logic (ENTER, not unlock)
+    const heartMover = document.getElementById('heart-mover');
+    let clicks = 0;
 
-      for (let i = 1; i <= PORTAL_DAYS; i++) {
-        const bubble = document.createElement("div");
-        bubble.className = "day-bubble";
-        bubble.textContent = i;
-
-        if (i === activeDay) bubble.classList.add("active");
-
-        bubble.addEventListener("click", () => {
-          selectedDay = i;
-          renderContent(i);
-          renderCalendar(i);
-        });
-
-        grid.appendChild(bubble);
+    function moveHeart() {
+      // allow entering even if data failed, but only after init attempted
+      if (clicks < 1) {
+        heartMover.style.transform = `translate(${Math.random() * 160 - 80}px, ${Math.random() * 160 - 80}px)`;
+        clicks++;
+        return;
       }
 
-      // Forever mode copy
-      $("days-left").innerText = "All memories are unlocked. Tap any day.";
+      document.getElementById('game-screen').style.opacity = '0';
+      setTimeout(() => {
+        document.getElementById('game-screen').style.display = 'none';
+        document.getElementById('main-app').classList.remove('hidden');
+
+        renderContent(selectedDay);
+        renderCalendar(selectedDay);
+      }, 450);
     }
 
-    function renderContent(day){
-      day = clamp(day, 1, PORTAL_DAYS);
+    document.getElementById('target-heart').addEventListener('click', moveHeart);
+
+    function renderContent(day) {
+      day = Math.min(PORTAL_DAYS, Math.max(1, day));
       const portalISO = portalISOForDay(day);
 
-      $("date-title").innerText = `February ${day}`;
-      const imgEl = $("display-img");
-      const msgEl = $("display-msg");
-
-      // If data not ready, still show photo fallback + a helpful note
-      if (!dataReady){
-        showDebug(`⚠️ <b>Messages not loaded</b><br>
-          The sheet could not be loaded right now, but photos can still work if present in <b>/${PHOTO_FOLDER}/</b>.<br>
-          Expected default name: <b>${portalISO}.jpg.jpg</b> (or .jpg).`);
-
-        const candidates = resolveImageCandidates("", portalISO);
-        setImageWithFallback(imgEl, candidates);
-
-        msgEl.innerText = "If you are reading this, the site is in offline mode. Your messages will appear when the sheet link works again.";
-        initScratch();
-        return;
+      // Find row matching portalISO
+      let row = null;
+      if (dataReady) {
+        row = allData.find(r => {
+          const raw = (r.Date || r.date || "").toString();
+          const iso = normalizeToISODate(raw);
+          return iso === portalISO;
+        });
       }
 
-      // Data ready
-      const row = findRowForPortalDay(portalISO);
+      document.getElementById('date-title').innerText = `February ${day}`;
 
-      if (!row){
-        // Show row mismatch diagnostics
-        const sample = allData.slice(0, 6).map(r => (r.Date || r.date || "")).join(" | ");
-        showDebug(`⚠️ <b>No row found</b><br>
-          Could not find a sheet row for <b>${portalISO}</b>.<br><br>
-          <b>Quick debug</b><br>
-          rows loaded = ${allData.length}<br>
-          sample dates = ${sample}<br><br>
-          Fix: ensure the sheet Date column matches <b>YYYY-MM-DD</b> for Feb 2026.`);
-        // still attempt photo fallback
-        const candidates = resolveImageCandidates("", portalISO);
-        setImageWithFallback(imgEl, candidates);
-        msgEl.innerText = "Sheet date mismatch. Fix the Date column to YYYY-MM-DD (Singapore).";
-        initScratch();
-        return;
+      const imgElement = document.getElementById('display-img');
+      const msgElement = document.getElementById('display-msg');
+
+      // ---- PHOTO LOGIC (REVERTED TO YOUR ORIGINAL BEHAVIOR) ----
+      // If sheet has ImageName -> use it as-is
+      // Else fallback to `${portalISO}.jpg.jpg`
+      // ---------------------------------------------------------
+      if (row) {
+        hideErr();
+        const rawName = (row.ImageName || row.imagename || row.IMAGE || "").toString().trim();
+        imgElement.src = rawName ? rawName : `${portalISO}.jpg.jpg`;
+        msgElement.innerText = (row.Message || row.message || row.MESSAGE || "Message column not found in sheet!").toString();
+      } else {
+        // Row missing or sheet failed
+        if (dataReady) {
+          const sampleDates = allData.slice(0, 8).map(r => (r.Date || r.date || '')).join(' | ');
+          showErr(`⚠️ <b>Data Sync Error</b><br>
+            Could not find a row for <b>${portalISO}</b> in your Sheet.<br><br>
+            <b>Quick debug:</b><br>
+            - rows loaded = ${allData.length}<br>
+            - sample raw dates = ${sampleDates}<br><br>
+            Fix: use Date format <b>YYYY-MM-DD</b> in the sheet.`);
+        } else {
+          // sheet failed
+          showErr(`⚠️ <b>Sheet not loaded</b><br>
+            Showing fallback image/message. Once the sheet link works again, content will appear.`);
+        }
+
+        imgElement.src = `${portalISO}.jpg.jpg`;
+        msgElement.innerText = dataReady
+          ? "Check your Google Sheet date format (or DD/MM vs MM/DD)."
+          : "Fallback mode: add your photos named like 2026-02-14.jpg.jpg and restore the sheet later.";
       }
-
-      hideDebug();
-
-      const rawMsg = (row.Message || row.message || row.MESSAGE || "").toString();
-      msgEl.innerText = rawMsg || "No message found for this day (Message column empty).";
-
-      const rawName = (row.ImageName || row.imagename || row.IMAGE || "").toString().trim();
-      const candidates = resolveImageCandidates(rawName, portalISO);
-      setImageWithFallback(imgEl, candidates);
 
       initScratch();
     }
 
-    // =========================
-    // Scratch (reliable + scroll unlock)
-    // =========================
-    function initScratch(){
-      const canvas = $("scratch-canvas");
-      const ctx = canvas.getContext("2d");
+    // CALENDAR: ALWAYS UNLOCKED FOREVER (no locks)
+    function renderCalendar(currentView) {
+      const grid = document.getElementById('calendar-wrapper');
+      grid.innerHTML = '';
+
+      for (let i = 1; i <= PORTAL_DAYS; i++) {
+        const bubble = document.createElement('div');
+        bubble.innerText = i;
+        bubble.className = 'day-bubble unlocked';
+
+        if (i === currentView) bubble.classList.add('active');
+
+        bubble.onclick = () => { selectedDay = i; renderContent(i); renderCalendar(i); };
+        grid.appendChild(bubble);
+      }
+
+      document.getElementById('days-left').innerText = `All memories are unlocked. Tap any day.`;
+      setDistanceTag();
+    }
+
+    // Scratch: works + disables canvas after enough scratch so message can scroll
+    function initScratch() {
+      const canvas = document.getElementById('scratch-canvas');
+      const ctx = canvas.getContext('2d');
       const parent = canvas.parentElement;
 
-      // Set size based on rendered layout
-      canvas.width = Math.max(10, parent.clientWidth);
-      canvas.height = Math.max(10, parent.clientHeight);
+      canvas.width = parent.offsetWidth;
+      canvas.height = parent.offsetHeight;
 
       canvas.classList.remove("disabled");
-      ctx.globalCompositeOperation = "source-over";
+
+      ctx.globalCompositeOperation = 'source-over';
 
       const grd = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      grd.addColorStop(0, "#ffd1e3");
-      grd.addColorStop(1, "#ff5fa2");
+      grd.addColorStop(0, '#ffd1e3');
+      grd.addColorStop(1, '#ff5fa2');
       ctx.fillStyle = grd;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -644,26 +670,25 @@
       ctx.textAlign = "center";
       ctx.fillText("SCRATCH TO READ", canvas.width / 2, canvas.height / 2 + 5);
 
-      ctx.globalCompositeOperation = "destination-out";
+      ctx.globalCompositeOperation = 'destination-out';
 
       let isDown = false;
 
-      function getXY(e){
+      function getXY(e) {
         const rect = canvas.getBoundingClientRect();
         const clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
         const clientY = (e.touches && e.touches[0]) ? e.touches[0].clientY : e.clientY;
         return { x: clientX - rect.left, y: clientY - rect.top };
       }
 
-      function scratchAt(e){
+      function scratchAt(e) {
         const { x, y } = getXY(e);
         ctx.beginPath();
         ctx.arc(x, y, 26, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      function maybeDisableCanvas(){
-        // expensive but only runs on end
+      function maybeDisableCanvas() {
         const img = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
         let transparent = 0;
         for (let i = 3; i < img.length; i += 4) {
@@ -671,7 +696,7 @@
         }
         const ratio = transparent / (img.length / 4);
 
-        if (ratio > 0.45){
+        if (ratio > 0.45) {
           canvas.classList.add("disabled");
         }
       }
@@ -687,79 +712,33 @@
       canvas.ontouchend = () => { if (isDown) { isDown = false; maybeDisableCanvas(); } };
     }
 
-    // Keep scratch correct on rotation/resizes
-    let resizeTimer = null;
-    window.addEventListener("resize", () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => initScratch(), 120);
-    });
-
-    // =========================
-    // Hug effect
-    // =========================
-    function sendHug(){
-      for (let i = 0; i < 15; i++){
-        const h = document.createElement("div");
-        h.innerText = "❤️";
-        h.style.position = "fixed";
-        h.style.left = "50%";
-        h.style.top = "50%";
-        h.style.transition = "2s";
-        h.style.pointerEvents = "none";
-        h.style.zIndex = "3000";
+    // Hug animation
+    function sendHug() {
+      for (let i = 0; i < 15; i++) {
+        const h = document.createElement('div');
+        h.innerText = '❤️';
+        h.style.position = 'fixed';
+        h.style.left = '50%';
+        h.style.top = '50%';
+        h.style.transition = '2s';
+        h.style.pointerEvents = 'none';
+        h.style.zIndex = '3000';
         document.body.appendChild(h);
 
         setTimeout(() => {
           h.style.transform = `translate(${(Math.random() - 0.5) * 400}px, ${(Math.random() - 0.5) * 600}px) scale(3) rotate(${Math.random() * 360}deg)`;
-          h.style.opacity = "0";
+          h.style.opacity = '0';
         }, 10);
 
         setTimeout(() => h.remove(), 2000);
       }
     }
 
-    function setDistanceTag(){
-      $("distance-tag").innerText = "3997 KM apart, but together forever";
+    function setDistanceTag() {
+      document.getElementById('distance-tag').innerText = `📍 3997 KM APART, BUT TOGETHER FOREVER`;
     }
 
-    // =========================
-    // Init
-    // =========================
-    async function init(){
-      setDistanceTag();
-
-      const { iso, y, m, d } = getSingaporeISODateParts();
-      sgNowISO = iso;
-
-      // Default day logic:
-      // - If it's February (any year) and day <= 28: default to that day
-      // - Else: default to day 28 (birthday)
-      let defaultDay = 28;
-      if (m === 2){
-        defaultDay = clamp(d, 1, PORTAL_DAYS);
-      }
-
-      // Always unlocked forever; default day selection only affects initial view
-      selectedDay = defaultDay;
-
-      // Try load data (but site works even if this fails)
-      try{
-        await loadData();
-        dataReady = true;
-      }catch(e){
-        dataReady = false;
-        showDebug(`⚠️ <b>Sheet load failed</b><br>${String(e)}<br><br>
-          The site will still work with photo fallbacks if your images exist in <b>/${PHOTO_FOLDER}/</b>.<br>
-          Fix: ensure the Google Sheet is <b>Published to the web</b> and the URL is correct.`);
-      }
-
-      renderCalendar(selectedDay);
-      renderContent(selectedDay);
-
-      // Bind hug button
-      $("hugBtn").addEventListener("click", sendHug);
-    }
-
+    // Start
     init();
   </script>
 </body>
